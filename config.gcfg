@@ -1,3 +1,8 @@
-; This is a comment
-[basic]
-message = hello from config # such comment
+[ssh]
+host = kekkonen.cs.hut.fi
+port = 22
+username =
+password =
+[tikplay]
+host = tikradio.tt.hut.fi
+port = 5000
