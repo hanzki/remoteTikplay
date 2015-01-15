@@ -54,21 +54,21 @@ func main() {
 	err := gcfg.ReadFileInto(&cfg, "config.gcfg")
 	handleError(err, "config", true)
 
-	tunnel, err := tikputil.Connect(&cfg.Tunnel)
+	tikplay, err := tikputil.NewTikplay(&cfg.Tunnel)
 
-	handleError(err, "ssh client", true)
+	handleError(err, "tikplay client", true)
 
-	defer tunnel.Close()
+	defer tikplay.Close()
 
-	var request *http.Request
+	var response *http.Response
 
 	switch os.Args[1] {
 	case "np":
-		request, err = tikputil.NowPlaying()
+		response, err = tikplay.NowPlaying()
 	case "skip":
-		request, err = tikputil.Skip()
+		response, err = tikplay.Skip()
 	case "clear":
-		request, err = tikputil.Clear()
+		response, err = tikplay.Clear()
 	case "list":
 		var (
 			n   int   = 10
@@ -78,24 +78,16 @@ func main() {
 			n, err = strconv.Atoi(os.Args[2])
 		}
 		if err == nil {
-			request, err = tikputil.Playlist(uint(n))
+			response, err = tikplay.Playlist(uint(n))
 		}
 	case "play":
 		if len(os.Args) >= 3 {
-			request, err = tikputil.Play(
-				&tikputil.PlayJSON{
-					fmt.Sprintf("%s@%s", cfg.Tunnel.Username, cfg.Tunnel.SshHost),
-					os.Args[2],
-				})
+			response, err = tikplay.Play(os.Args[2])
 		} else {
 			fmt.Println("Missing play url")
 			os.Exit(1)
 		}
 	}
-
-	handleError(err, "Request", true)
-
-	response, err := tunnel.Execute(request)
 
 	handleError(err, "Response", true)
 

@@ -14,36 +14,72 @@ const (
 	fileUrl  = baseUrl + "/file"
 )
 
-type PlayJSON struct {
+type playJSON struct {
 	User string `json:"user"`
 	Url  string `json:"url"`
 }
 
-func NowPlaying() (*http.Request, error) {
-	return http.NewRequest("GET", songUrl, nil)
+type Tikplay struct {
+	Tunnel *Tunnel
+	Whoami string
 }
 
-func Playlist(n uint) (*http.Request, error) {
-	return http.NewRequest("GET", fmt.Sprintf("%s/%d", queueUrl, n), nil)
-}
-
-func Skip() (*http.Request, error) {
-	return http.NewRequest("DELETE", songUrl, nil)
-}
-
-func Clear() (*http.Request, error) {
-	return http.NewRequest("DELETE", queueUrl, nil)
-}
-
-func Play(pjson *PlayJSON) (*http.Request, error) {
-	jsonbytes, err := json.Marshal(pjson)
+func NewTikplay(cfg *Config) (*Tikplay, error) {
+	tunnel, err := Connect(cfg)
 	if err != nil {
 		return nil, err
 	}
-	req, err := http.NewRequest("POST", songUrl, bytes.NewReader(jsonbytes))
+	return &Tikplay{
+		tunnel,
+		fmt.Sprintf("%s@%s", cfg.Username, cfg.SshHost),
+	}, nil
+}
+
+func (tp *Tikplay) NowPlaying() (*http.Response, error) {
+	request, err := http.NewRequest("GET", songUrl, nil)
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	return req, nil
+	return tp.Tunnel.Execute(request)
+}
+
+func (tp *Tikplay) Playlist(n uint) (*http.Response, error) {
+	request, err := http.NewRequest("GET", fmt.Sprintf("%s/%d", queueUrl, n), nil)
+	if err != nil {
+		return nil, err
+	}
+	return tp.Tunnel.Execute(request)
+}
+
+func (tp *Tikplay) Skip() (*http.Response, error) {
+	request, err := http.NewRequest("DELETE", songUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	return tp.Tunnel.Execute(request)
+}
+
+func (tp *Tikplay) Clear() (*http.Response, error) {
+	request, err := http.NewRequest("DELETE", queueUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	return tp.Tunnel.Execute(request)
+}
+
+func (tp *Tikplay) Play(url string) (*http.Response, error) {
+	jsonbytes, err := json.Marshal(playJSON{tp.Whoami, url})
+	if err != nil {
+		return nil, err
+	}
+	request, err := http.NewRequest("POST", songUrl, bytes.NewReader(jsonbytes))
+	if err != nil {
+		return nil, err
+	}
+	request.Header.Set("Content-Type", "application/json")
+	return tp.Tunnel.Execute(request)
+}
+
+func (tp *Tikplay) Close() {
+	tp.Tunnel.Close()
 }
