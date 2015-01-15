@@ -17,6 +17,14 @@ type (
 	}
 )
 
+const usage = `usage: file <command> <parameter>
+available commands:
+np         = now playing
+list <n>   = lists n songs from queue (n defaults to 10)
+play <url> = plays song from url
+skip       = skips the current song
+clear      = clears the whole queue`
+
 var (
 	defaultConfig = Config{
 		sshtunnel.Config{
@@ -38,6 +46,11 @@ func handleError(e error, s string, f bool) {
 }
 
 func main() {
+	if len(os.Args) < 2 {
+		fmt.Println(usage)
+		os.Exit(0)
+	}
+
 	cfg := defaultConfig
 	err := gcfg.ReadFileInto(&cfg, "config.gcfg")
 	handleError(err, "config", true)
@@ -58,16 +71,27 @@ func main() {
 	case "clear":
 		request, err = tikplay.Clear()
 	case "list":
-		n, err := strconv.Atoi(os.Args[2])
+		var (
+			n   int   = 10
+			err error = nil
+		)
+		if len(os.Args) >= 3 {
+			n, err = strconv.Atoi(os.Args[2])
+		}
 		if err == nil {
 			request, err = tikplay.Playlist(uint(n))
 		}
 	case "play":
-		request, err = tikplay.Play(
-			&tikplay.PlayJSON{
-				fmt.Sprintf("%s@%s", cfg.Tunnel.Username, cfg.Tunnel.SshHost),
-				os.Args[2],
-			})
+		if len(os.Args) >= 3 {
+			request, err = tikplay.Play(
+				&tikplay.PlayJSON{
+					fmt.Sprintf("%s@%s", cfg.Tunnel.Username, cfg.Tunnel.SshHost),
+					os.Args[2],
+				})
+		} else {
+			fmt.Println("Missing play url")
+			os.Exit(1)
+		}
 	}
 
 	handleError(err, "Request", true)
