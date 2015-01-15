@@ -11,3 +11,4 @@ The client is used with syntax: `tikp <command> <parameter>`
 * `list <n>` = shows the n songs from the queue (n defaults to 10)
 * `skip` = skips the currently playing song
 * `clear` = clears the whole queue
+* `task <id>` = shows the status of task with given id
