@@ -2,6 +2,12 @@
 
 A commandline client for the TikPlay server that routes traffic through a ssh tunnel.
 
+# Installation
+
+run `go install` in the tikp folder. If you get error messages about missing dependecies run `go get` for each of them.
+
+The config.gcfg needs your ssh username, but the password is optional if you have ssh-agent running.
+
 # Usage
 
 The client is used with syntax: `tikp <command> <parameter>`
