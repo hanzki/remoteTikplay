@@ -12,6 +12,7 @@ const (
 	songUrl  = baseUrl + "/song"
 	queueUrl = baseUrl + "/queue"
 	fileUrl  = baseUrl + "/file"
+	taskUrl  = baseUrl + "/task"
 )
 
 type playJSON struct {
@@ -61,6 +62,14 @@ func (tp *Tikplay) Skip() (*http.Response, error) {
 
 func (tp *Tikplay) Clear() (*http.Response, error) {
 	request, err := http.NewRequest("DELETE", queueUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	return tp.Tunnel.Execute(request)
+}
+
+func (tp *Tikplay) Task(id uint) (*http.Response, error) {
+	request, err := http.NewRequest("GET", fmt.Sprintf("%s/%d", taskUrl, id), nil)
 	if err != nil {
 		return nil, err
 	}

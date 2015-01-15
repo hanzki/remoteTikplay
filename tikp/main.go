@@ -80,6 +80,16 @@ func main() {
 		if err == nil {
 			response, err = tikplay.Playlist(uint(n))
 		}
+	case "task":
+		if len(os.Args) >= 3 {
+			id, err := strconv.Atoi(os.Args[2])
+			if err == nil {
+				response, err = tikplay.Task(uint(id))
+			} else {
+				fmt.Println("Missing task number")
+				os.Exit(1)
+			}
+		}
 	case "play":
 		if len(os.Args) >= 3 {
 			response, err = tikplay.Play(os.Args[2])
