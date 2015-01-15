@@ -92,9 +92,15 @@ func main() {
 	handleError(err, "Response", true)
 
 	if response != nil {
-		body, err := ioutil.ReadAll(response.Body)
+		fmt.Printf("\nresp:\n%+v\n", response)
+		fmt.Printf("\nbody:\n%+v\n\n", response.Body)
+		var body []byte
+		if body, err = ioutil.ReadAll(response.Body); err != nil {
+			panic(err)
+		}
 		response.Body.Close()
 		handleError(err, "Body", true)
 		fmt.Printf("%s\n", body)
+
 	}
 }
