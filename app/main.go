@@ -44,12 +44,14 @@ func main() {
 
 	handleError(err, "ssh client", true)
 
+	defer tunnel.Close()
+
 	for i := 0; i < 10; i++ {
 		request, err := http.NewRequest("GET", "/srv/v1.0/song", nil)
 
 		handleError(err, "Request", true)
 
-		response, err := tunnel.Get(request)
+		response, err := tunnel.Execute(request)
 
 		handleError(err, "Response", true)
 
