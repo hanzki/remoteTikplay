@@ -1,0 +1,7 @@
+[tunnel]
+sshhost = kekkonen.cs.hut.fi
+sshport = 22
+username =
+password =
+tphost = tikradio.tt.hut.fi
+tpport = 5000
