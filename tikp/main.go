@@ -3,8 +3,7 @@ package main
 import (
 	"code.google.com/p/gcfg"
 	"fmt"
-	"github.com/hanzki/remoteTikplay/sshtunnel"
-	"github.com/hanzki/remoteTikplay/tikplay"
+	"github.com/hanzki/remoteTikplay/tikputil"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -13,7 +12,7 @@ import (
 
 type (
 	Config struct {
-		Tunnel sshtunnel.Config
+		Tunnel tikputil.Config
 	}
 )
 
@@ -27,7 +26,7 @@ clear      = clears the whole queue`
 
 var (
 	defaultConfig = Config{
-		sshtunnel.Config{
+		tikputil.Config{
 			SshHost: "kekkonen.cs.hut.fi",
 			SshPort: 22,
 			TpHost:  "tikradio.tt.hut.fi",
@@ -55,21 +54,21 @@ func main() {
 	err := gcfg.ReadFileInto(&cfg, "config.gcfg")
 	handleError(err, "config", true)
 
-	tunnel, err := sshtunnel.Connect(&cfg.Tunnel)
+	tikplay, err := tikputil.NewTikplay(&cfg.Tunnel)
 
-	handleError(err, "ssh client", true)
+	handleError(err, "tikplay client", true)
 
-	defer tunnel.Close()
+	defer tikplay.Close()
 
-	var request *http.Request
+	var response *http.Response
 
 	switch os.Args[1] {
 	case "np":
-		request, err = tikplay.NowPlaying()
+		response, err = tikplay.NowPlaying()
 	case "skip":
-		request, err = tikplay.Skip()
+		response, err = tikplay.Skip()
 	case "clear":
-		request, err = tikplay.Clear()
+		response, err = tikplay.Clear()
 	case "list":
 		var (
 			n   int   = 10
@@ -79,24 +78,16 @@ func main() {
 			n, err = strconv.Atoi(os.Args[2])
 		}
 		if err == nil {
-			request, err = tikplay.Playlist(uint(n))
+			response, err = tikplay.Playlist(uint(n))
 		}
 	case "play":
 		if len(os.Args) >= 3 {
-			request, err = tikplay.Play(
-				&tikplay.PlayJSON{
-					fmt.Sprintf("%s@%s", cfg.Tunnel.Username, cfg.Tunnel.SshHost),
-					os.Args[2],
-				})
+			response, err = tikplay.Play(os.Args[2])
 		} else {
 			fmt.Println("Missing play url")
 			os.Exit(1)
 		}
 	}
-
-	handleError(err, "Request", true)
-
-	response, err := tunnel.Execute(request)
 
 	handleError(err, "Response", true)
 
