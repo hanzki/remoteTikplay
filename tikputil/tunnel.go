@@ -1,4 +1,4 @@
-package sshtunnel
+package tikputil
 
 import (
 	"bufio"

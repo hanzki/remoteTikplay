@@ -1,4 +1,4 @@
-package tikplay
+package tikputil
 
 import (
 	"bytes"
