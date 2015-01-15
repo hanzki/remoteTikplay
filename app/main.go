@@ -4,9 +4,11 @@ import (
 	"code.google.com/p/gcfg"
 	"fmt"
 	"github.com/hanzki/remoteTikplay/sshtunnel"
+	"github.com/hanzki/remoteTikplay/tikplay"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 )
 
 type (
@@ -46,21 +48,38 @@ func main() {
 
 	defer tunnel.Close()
 
-	for i := 0; i < 10; i++ {
-		request, err := http.NewRequest("GET", "/srv/v1.0/song", nil)
+	var request *http.Request
 
-		handleError(err, "Request", true)
-
-		response, err := tunnel.Execute(request)
-
-		handleError(err, "Response", true)
-
-		if response != nil {
-			body, err := ioutil.ReadAll(response.Body)
-			response.Body.Close()
-			handleError(err, "Body", true)
-			fmt.Printf("%s\n", body)
+	switch os.Args[1] {
+	case "np":
+		request, err = tikplay.NowPlaying()
+	case "skip":
+		request, err = tikplay.Skip()
+	case "clear":
+		request, err = tikplay.Clear()
+	case "list":
+		n, err := strconv.Atoi(os.Args[2])
+		if err == nil {
+			request, err = tikplay.Playlist(uint(n))
 		}
+	case "play":
+		request, err = tikplay.Play(
+			&tikplay.PlayJSON{
+				fmt.Sprintf("%s@%s", cfg.Tunnel.Username, cfg.Tunnel.SshHost),
+				os.Args[2],
+			})
 	}
 
+	handleError(err, "Request", true)
+
+	response, err := tunnel.Execute(request)
+
+	handleError(err, "Response", true)
+
+	if response != nil {
+		body, err := ioutil.ReadAll(response.Body)
+		response.Body.Close()
+		handleError(err, "Body", true)
+		fmt.Printf("%s\n", body)
+	}
 }
