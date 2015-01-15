@@ -4,7 +4,7 @@ A commandline client for the TikPlay server that routes traffic through a ssh tu
 
 # Usage
 
-The client is used with syntax: `app <command> <parameter>`
+The client is used with syntax: `tikp <command> <parameter>`
 ### Commands
 * `play <url>` = Plays the given url
 * `np` = Shows currently playing song
