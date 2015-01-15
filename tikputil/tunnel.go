@@ -25,7 +25,20 @@ type (
 		tpHost string
 		tpPort int
 	}
+
+	ConnWrap struct {
+		conn net.Conn
+	}
 )
+
+func (cw ConnWrap) Read(p []byte) (n int, err error) {
+	defer fmt.Println("R:", p)
+	return cw.conn.Read(p)
+}
+func (cw ConnWrap) Write(p []byte) (n int, err error) {
+	defer fmt.Println("W:", p)
+	return cw.conn.Write(p)
+}
 
 func Connect(cfg *Config) (*Tunnel, error) {
 	auths := []ssh.AuthMethod{ssh.Password(cfg.Password)}
@@ -69,11 +82,13 @@ func (t *Tunnel) Execute(req *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	defer tunnel.Close()
+	//defer tunnel.Close()
 
-	tunnelReader := bufio.NewReader(tunnel)
+	mock := ConnWrap{tunnel}
 
-	req.Write(tunnel)
+	tunnelReader := bufio.NewReader(mock)
+
+	req.Write(mock)
 
 	response, err := http.ReadResponse(tunnelReader, req)
 
