@@ -15,8 +15,8 @@ const (
 )
 
 type PlayJSON struct {
-	User string
-	Url  string
+	User string `json:"user"`
+	Url  string `json:"url"`
 }
 
 func NowPlaying() (*http.Request, error) {
