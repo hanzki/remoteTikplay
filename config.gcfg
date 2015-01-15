@@ -1,8 +1,7 @@
-[ssh]
-host = kekkonen.cs.hut.fi
-port = 22
+[tunnel]
+sshhost = kekkonen.cs.hut.fi
+sshport = 22
 username =
 password =
-[tikplay]
-host = tikradio.tt.hut.fi
-port = 5000
+tphost = tikradio.tt.hut.fi
+tpport = 5000

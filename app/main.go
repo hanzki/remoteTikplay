@@ -1,10 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"code.google.com/p/gcfg"
 	"fmt"
-	"golang.org/x/crypto/ssh"
+	"github.com/hanzki/remoteTikplay/sshtunnel"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -12,27 +11,18 @@ import (
 
 type (
 	Config struct {
-		Ssh     sshSection
-		Tikplay tikplaySection
-	}
-
-	sshSection struct {
-		Host     string
-		Port     int
-		Username string
-		Password string
-	}
-
-	tikplaySection struct {
-		Host string
-		Port int
+		Tunnel sshtunnel.Config
 	}
 )
 
 var (
 	defaultConfig = Config{
-		sshSection{Host: "kekkonen.cs.hut.fi", Port: 22},
-		tikplaySection{Host: "tikradio.tt.hut.fi", Port: 5000},
+		sshtunnel.Config{
+			SshHost: "kekkonen.cs.hut.fi",
+			SshPort: 22,
+			TpHost:  "tikradio.tt.hut.fi",
+			TpPort:  5000,
+		},
 	}
 )
 
@@ -50,34 +40,25 @@ func main() {
 	err := gcfg.ReadFileInto(&cfg, "config.gcfg")
 	handleError(err, "config", true)
 
-	sshcfg := &ssh.ClientConfig{
-		User: cfg.Ssh.Username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(cfg.Ssh.Password),
-		},
-	}
-
-	client, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Ssh.Host, cfg.Ssh.Port), sshcfg)
+	tunnel, err := sshtunnel.Connect(&cfg.Tunnel)
 
 	handleError(err, "ssh client", true)
 
-	tunnel, err := client.Dial("tcp", fmt.Sprintf("%s:%d", cfg.Tikplay.Host, cfg.Tikplay.Port))
+	for i := 0; i < 10; i++ {
+		request, err := http.NewRequest("GET", "/srv/v1.0/song", nil)
 
-	handleError(err, "tunnel", true)
+		handleError(err, "Request", true)
 
-	tunnelReader := bufio.NewReader(tunnel)
+		response, err := tunnel.Get(request)
 
-	request, err := http.NewRequest("GET", "/srv/v1.0/song", nil)
-	handleError(err, "Request", true)
+		handleError(err, "Response", true)
 
-	request.Write(tunnel)
-	response, err := http.ReadResponse(tunnelReader, request)
-	handleError(err, "Response", true)
-	if response != nil {
-		body, err := ioutil.ReadAll(response.Body)
-		response.Body.Close()
-		handleError(err, "Body", true)
-		fmt.Printf("%s\n", body)
+		if response != nil {
+			body, err := ioutil.ReadAll(response.Body)
+			response.Body.Close()
+			handleError(err, "Body", true)
+			fmt.Printf("%s\n", body)
+		}
 	}
 
 }
